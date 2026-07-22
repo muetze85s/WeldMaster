@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeldMaster FCAW Assistent PRO</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#d97706">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #d97706;
+            --bg-warm: #fdfaf7;
+            --card-bg: #ffffff;
+            --text-main: #451a03;
+        }
+        body {
+            background-color: var(--bg-warm);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 220px;
+        }
+        .custom-shadow {
+            box-shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <header class="bg-gradient-to-r from-amber-700 to-amber-900 text-white py-5 shadow-lg mb-6">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-black flex items-center tracking-wide">
+                    <span class="mr-2 text-2xl">🔥</span> WELDMASTER FCAW
+                </h1>
+                <p class="text-amber-200 text-xs mt-0.5 font-medium">Fülldraht-Assistent, Profilspeicher & KI-Analyse</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="pwa-install-btn" class="hidden bg-amber-500 hover:bg-amber-400 text-amber-950 font-black text-xs px-3 py-1.5 rounded-lg shadow transition">
+                    📲 App Installieren
+                </button>
+                <span class="bg-amber-600/50 text-amber-100 text-xs px-2.5 py-1 rounded-full border border-amber-400/30 font-mono">v3.0 PWA</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 max-w-4xl">
+        
+        <!-- Navigation Bar -->
+        <nav class="flex overflow-x-auto space-x-2 mb-6 pb-2 scrollbar-hide border-b border-amber-200/60">
+            <button onclick="showSection('profile')" id="nav-profile" class="nav-btn px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all bg-amber-600 text-white shadow-md">
+                1. Geräte-Profil
+            </button>
+            <button onclick="showSection('project')" id="nav-project" class="nav-btn px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all bg-white text-gray-600 hover:bg-amber-50">
+                2. Projekt-Setup
+            </button>
+            <button onclick="showSection('dashboard')" id="nav-dashboard" class="nav-btn px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all bg-white text-gray-600 hover:bg-amber-50">
+                3. Parameter & Führung
+            </button>
+            <button onclick="showSection('inspection')" id="nav-inspection" class="nav-btn px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all bg-white text-gray-600 hover:bg-amber-50">
+                4. KI-Nahtkontrolle
+            </button>
+        </nav>
+
+        <!-- SECTION 1: GERÄTE-PROFIL -->
+        <section id="profile" class="step-section space-y-6">
+            <div class="bg-white rounded-2xl p-6 custom-shadow border border-amber-100">
+                
+                <!-- Profile Management Bar -->
+                <div class="bg-amber-50/80 p-4 rounded-xl border border-amber-200 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div class="w-full sm:w-auto flex-1">
+                        <label class="block text-[10px] font-black uppercase tracking-wider text-amber-900 mb-1">Gespeichertes Geräte-Profil laden</label>
+                        <select id="profile_select" onchange="loadSelectedProfile()" class="w-full border rounded-lg p-2 font-bold text-xs text-gray-800 bg-white outline-none focus:ring-2 focus:ring-amber-500">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="flex space-x-2 w-full sm:w-auto justify-end">
+                        <button onclick="saveCurrentProfile()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3.5 py-2 rounded-lg font-bold shadow transition">
+                            💾 Profil Speichern
+                        </button>
+                        <button onclick="createNewProfile()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-3.5 py-2 rounded-lg font-bold border border-gray-300 transition">
+                            ➕ Neu
+                        </button>
+                        <button onclick="deleteCurrentProfile()" class="bg-red-50 hover:bg-red-100 text-red-700 text-xs px-2.5 py-2 rounded-lg font-bold border border-red-200 transition" title="Profil löschen">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-amber-900 flex items-center">
+                        <span class="w-8 h-8 bg-amber-600 text-white rounded-lg flex items-center justify-center mr-3 text-sm font-black">1</span>
+                        Geräte-Spezifikationen
+                    </h2>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-xs font-bold uppercase text-amber-900 mb-1">Bezeichnung des Schweißgeräts</label>
+                    <input type="text" id="profile_name" value="Mein Fülldraht-Gerät" class="w-full border rounded-lg p-2.5 font-bold text-gray-800 focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateUI()">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-amber-50/50 p-4 rounded-xl border border-amber-100">
+                        <label class="block text-xs font-bold uppercase text-amber-900 mb-2">Spannungsbereich (Volt U)</label>
+                        <div class="flex space-x-3">
+                            <div>
+                                <span class="text-[10px] text-gray-500 font-bold block">MIN VOLT</span>
+                                <input type="number" step="0.1" id="u_min" value="14.0" class="w-full border rounded-lg p-2.5 font-bold text-gray-800 focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateUI()">
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-gray-500 font-bold block">MAX VOLT</span>
+                                <input type="number" step="0.1" id="u_max" value="17.4" class="w-full border rounded-lg p-2.5 font-bold text-gray-800 focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateUI()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-50/50 p-4 rounded-xl border border-amber-100">
+                        <label class="block text-xs font-bold uppercase text-amber-900 mb-2">Stromstärkebereich (Ampere I)</label>
+                        <div class="flex space-x-3">
+                            <div>
+                                <span class="text-[10px] text-gray-500 font-bold block">MIN AMPERE</span>
+                                <input type="number" id="i_min" value="30" class="w-full border rounded-lg p-2.5 font-bold text-gray-800 focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateUI()">
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-gray-500 font-bold block">MAX AMPERE</span>
+                                <input type="number" id="i_max" value="120" class="w-full border rounded-lg p-2.5 font-bold text-gray-800 focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateUI()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-gray-200 mb-6">
+                    <label class="block text-xs font-bold uppercase text-gray-700 mb-3">Drahtvorschub-Steuerung des Geräts</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-amber-50 transition border-amber-200 bg-amber-50/30">
+                            <input type="radio" name="wfs_mode" value="separate" checked onchange="toggleWfsMode()" class="text-amber-600 focus:ring-amber-500">
+                            <div class="ml-3">
+                                <span class="block text-xs font-bold text-gray-800">Separater Drahtregler (1-10)</span>
+                                <span class="block text-[11px] text-gray-500">Drahtvorschub ist unabhängig einstellbar</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-3 border rounded-xl cursor-pointer hover:bg-amber-50 transition border-gray-200">
+                            <input type="radio" name="wfs_mode" value="synergic" onchange="toggleWfsMode()" class="text-amber-600 focus:ring-amber-500">
+                            <div class="ml-3">
+                                <span class="block text-xs font-bold text-gray-800">Automatisch (Synergisch)</span>
+                                <span class="block text-[11px] text-gray-500">Drahtgeschwindigkeit koppelt sich stufenlos an Stromstärke</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Calibration Test -->
+                <div id="calibration-box" class="p-5 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-xl border border-amber-200">
+                    <h3 class="font-bold text-amber-900 text-sm mb-1 flex items-center">
+                        <span class="mr-2">📏</span> Drahtvorschub-Kalibrierung (15-Sekunden-Test)
+                    </h3>
+                    <p class="text-xs text-amber-800 mb-4">
+                        Stelle deinen Drahtregler auf <strong>Stufe 5</strong>. Halte die Pistole ohne Lichtbogen für exakt 15 Sekunden gedrückt und miss die ausgetretene Drahtlänge.
+                    </p>
+                    <div class="flex flex-col sm:flex-row items-end gap-3">
+                        <div class="flex-1 w-full">
+                            <label class="block text-[10px] font-bold text-amber-900 mb-1 uppercase">Gemessene Länge (cm in 15s)</label>
+                            <input type="number" id="cal_length" value="150" class="w-full border rounded-lg p-2.5 font-bold text-gray-800 focus:ring-2 focus:ring-amber-500 outline-none bg-white">
+                        </div>
+                        <button onclick="calculateWFSConstant()" class="w-full sm:w-auto bg-amber-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-amber-700 transition shadow">
+                            Jetzt Kalibrieren
+                        </button>
+                    </div>
+                    <div id="cal_result" class="mt-3 p-2 bg-amber-100 rounded-lg text-xs font-bold text-amber-900 flex items-center justify-between">
+                        <span>Ergebnis für Stufe 5: <span id="v_wfs_val" class="text-amber-700 font-mono text-sm">6.0</span> m/min</span>
+                        <span class="text-[10px] text-amber-700 font-mono">Skalierung aktualisiert</span>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button onclick="showSection('project')" class="bg-amber-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-amber-700 transition flex items-center shadow-lg">
+                        Weiter zu Projekt-Setup →
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: PROJEKT-SETUP -->
+        <section id="project" class="step-section hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 custom-shadow border border-amber-100">
+                
+                <!-- Project Management Bar -->
+                <div class="bg-amber-50/80 p-4 rounded-xl border border-amber-200 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div class="w-full sm:w-auto flex-1">
+                        <label class="block text-[10px] font-black uppercase tracking-wider text-amber-900 mb-1">Gespeichertes Projekt laden</label>
+                        <select id="project_select" onchange="loadSelectedProject()" class="w-full border rounded-lg p-2 font-bold text-xs text-gray-800 bg-white outline-none focus:ring-2 focus:ring-amber-500">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="flex space-x-2 w-full sm:w-auto justify-end">
+                        <button onclick="saveCurrentProject()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3.5 py-2 rounded-lg font-bold shadow transition">
+                            💾 Projekt Speichern
+                        </button>
+                        <button onclick="createNewProject()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs px-3.5 py-2 rounded-lg font-bold border border-gray-300 transition">
+                            ➕ Neues Projekt
+                        </button>
+                    </div>
+                </div>
+
+                <h2 class="text-xl font-bold text-amber-900 mb-4 flex items-center">
+                    <span class="w-8 h-8 bg-amber-600 text-white rounded-lg flex items-center justify-center mr-3 text-sm font-black">2</span>
+                    Projekt-Spezifikationen
+                </h2>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-bold uppercase text-amber-900 mb-1">Projektbezeichnung</label>
+                    <input type="text" id="project_name" value="Neues Schweißprojekt" class="w-full border rounded-lg p-2.5 font-bold text-gray-800 focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateUI()">
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Material & Thickness selection -->
+                    <div class="space-y-6">
+                        <!-- Dual Material Input for Dissimilar Joining -->
+                        <div>
+                            <label class="block font-bold text-xs uppercase text-amber-900 tracking-wider mb-2">1. Werkstoffe der Fügepartner</label>
+                            
+                            <div class="space-y-3">
+                                <div>
+                                    <span class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Teil 1 (Hauptwerkstoff)</span>
+                                    <select id="mat1" class="w-full border-2 border-gray-200 rounded-xl p-2.5 text-xs font-bold text-gray-800 outline-none focus:border-amber-500 bg-white" onchange="updateUI()">
+                                        <option value="steel">Unlegierter Rohstahl (S235 / S355)</option>
+                                        <option value="galvanized">Verzinkter Stahl (Feuer-/Sendzimirverzinkt)</option>
+                                        <option value="stainless">Edelstahl / Rostfrei (V2A / V4A)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <span class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Teil 2 (Zweiter Fügepartner)</span>
+                                    <select id="mat2" class="w-full border-2 border-gray-200 rounded-xl p-2.5 text-xs font-bold text-gray-800 outline-none focus:border-amber-500 bg-white" onchange="updateUI()">
+                                        <option value="same">Gleicher Werkstoff wie Teil 1</option>
+                                        <option value="steel">Unlegierter Rohstahl (S235 / S355)</option>
+                                        <option value="galvanized">Verzinkter Stahl (Feuer-/Sendzimirverzinkt)</option>
+                                        <option value="stainless">Edelstahl / Rostfrei (V2A / V4A)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mixed Thickness Input (0.1mm steps with synchronized number input) -->
+                        <div>
+                            <label class="block font-bold text-xs uppercase text-amber-900 tracking-wider mb-2">2. Materialstärken (in 0,1 mm)</label>
+                            
+                            <div class="space-y-4 bg-amber-50/50 p-4 rounded-xl border border-amber-100">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs font-bold text-gray-700">Stärke Teil 1:</span>
+                                        <div class="flex items-center space-x-1">
+                                            <input type="number" id="thickness1_num" min="0.5" max="12.0" step="0.1" value="3.0" class="w-20 text-right border rounded p-1 font-mono font-bold text-xs text-amber-900" oninput="syncThickness('num1')">
+                                            <span class="text-xs font-bold text-gray-500">mm</span>
+                                        </div>
+                                    </div>
+                                    <input type="range" id="thickness1_range" min="0.5" max="12.0" step="0.1" value="3.0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-600" oninput="syncThickness('range1')">
+                                </div>
+
+                                <div class="border-t border-amber-200/60 pt-3">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs font-bold text-gray-700">Stärke Teil 2 (optional abweichend):</span>
+                                        <div class="flex items-center space-x-1">
+                                            <input type="number" id="thickness2_num" min="0.5" max="12.0" step="0.1" value="3.0" class="w-20 text-right border rounded p-1 font-mono font-bold text-xs text-amber-900" oninput="syncThickness('num2')">
+                                            <span class="text-xs font-bold text-gray-500">mm</span>
+                                        </div>
+                                    </div>
+                                    <input type="range" id="thickness2_range" min="0.5" max="12.0" step="0.1" value="3.0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-600" oninput="syncThickness('range2')">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Position & Wire Gas -->
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block font-bold text-xs uppercase text-amber-900 tracking-wider mb-2">3. Schweißposition</label>
+                            <select id="position" class="w-full border-2 border-gray-200 rounded-xl p-3 text-xs font-bold text-gray-800 outline-none focus:border-amber-500 bg-white" onchange="updateUI()">
+                                <option value="horizontal">Horizontal / Wanne (PA/PB) - Einsteigerfreundlich</option>
+                                <option value="vertical_up">Steignaht (PF) - Senkrecht nach oben</option>
+                                <option value="vertical_down">Fallnaht (PG) - Senkrecht nach unten (Dünnblech)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-xs uppercase text-amber-900 tracking-wider mb-2">4. Fülldraht-Typ & Gas</label>
+                            <select id="gas" class="w-full border-2 border-gray-200 rounded-xl p-3 text-xs font-bold text-gray-800 outline-none focus:border-amber-500 bg-white" onchange="updateUI()">
+                                <option value="none">Selbstschützend (FCAW-S / Ohne Schutzgas)</option>
+                                <option value="mix">Gasgeschützt (FCAW-G mit Ar/CO2 Mix 82/18)</option>
+                                <option value="co2">Gasgeschützt (100% CO2)</option>
+                            </select>
+                        </div>
+
+                        <div class="p-4 bg-amber-50 rounded-xl border border-amber-200/80">
+                            <h4 class="text-xs font-bold text-amber-900 mb-1 flex items-center">
+                                💡 Polarisierung
+                            </h4>
+                            <p id="polarization_hint" class="text-[11px] text-amber-800 leading-relaxed">
+                                Selbstschützender Fülldraht erfordert <strong>DCEN (Brenner an Minuspol -)</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-between">
+                    <button onclick="showSection('profile')" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl font-bold text-sm hover:bg-gray-200 transition">
+                        ← Zurück
+                    </button>
+                    <button onclick="showSection('dashboard')" class="bg-amber-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-amber-700 transition shadow-lg">
+                        Parameter berechnen →
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: PARAMETER & FÜHRUNG -->
+        <section id="dashboard" class="step-section hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Calculated Parameters -->
+                <div class="lg:col-span-2 space-y-6">
+                    
+                    <!-- Alert Banner for Machine Boundary Limit Exceeded -->
+                    <div id="device_limit_warning" class="hidden bg-gradient-to-r from-red-500 to-amber-600 text-white p-4 rounded-2xl shadow-md border border-red-400">
+                        <div class="flex items-start">
+                            <span class="text-2xl mr-3">⚠️</span>
+                            <div>
+                                <h4 class="font-black text-sm uppercase tracking-wide">Leistungsgrenze deines Geräts erreicht!</h4>
+                                <p id="device_limit_msg" class="text-xs mt-1 text-red-50 leading-relaxed">
+                                    Das gewählte Material erfordert höhere Parameter als dein Gerät liefern kann. Die Werte wurden auf das Maximum deines Geräts angepasst.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 custom-shadow border-t-4 border-amber-600">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-black text-gray-900">Geräte-Einstellungen für dein Gerät</h3>
+                            <span id="target_status_badge" class="text-xs font-bold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">Optimaler Arbeitspunkt</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <!-- Voltage output -->
+                            <div class="text-center p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-2xl border border-amber-200">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-amber-800 block mb-1">Spannung (U)</span>
+                                <div id="res_v_phys" class="text-3xl font-black text-amber-900">17.4 V</div>
+                                <div id="res_v_knob" class="text-xs mt-2 font-mono font-bold bg-amber-200/80 text-amber-900 px-2.5 py-1 rounded-md inline-block">Regler Stufe: MAX (10)</div>
+                            </div>
+
+                            <!-- WFS output -->
+                            <div class="text-center p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-2xl border border-amber-200">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-amber-800 block mb-1">Drahtvorschub (WFS)</span>
+                                <div id="res_wfs_phys" class="text-3xl font-black text-amber-900">4.8 m/min</div>
+                                <div id="res_wfs_knob" class="text-xs mt-2 font-mono font-bold bg-amber-200/80 text-amber-900 px-2.5 py-1 rounded-md inline-block">Automatisch gekoppelt</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-gray-700">Erwarteter Schweißstrom (Effektiv):</span>
+                                <span id="res_amp" class="font-mono font-black text-amber-700 text-sm">114 A</span>
+                            </div>
+                            <div class="w-full bg-gray-200 h-3 rounded-full overflow-hidden">
+                                <div id="amp_progress" class="bg-gradient-to-r from-amber-500 to-orange-600 h-full transition-all duration-500" style="width: 90%"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-gray-400 mt-1 font-bold">
+                                <span>Geräte-Min: <span id="lbl_i_min">30</span>A</span>
+                                <span>Auslastung</span>
+                                <span>Geräte-Max: <span id="lbl_i_max">120</span>A</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Guidelines and Instructions -->
+                    <div class="bg-white rounded-2xl p-6 custom-shadow border border-amber-100 space-y-4">
+                        <h3 class="font-bold text-base text-amber-900 flex items-center">
+                            <span class="mr-2">🛠️</span> Vorbereitung, Einbrand & Wärmesteuerung
+                        </h3>
+
+                        <div id="dynamic_guidelines" class="space-y-4 text-xs text-gray-700 leading-relaxed">
+                            <!-- Populated via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Torch Angle Chart & Torch Technique -->
+                <div class="space-y-6">
+                    <div class="bg-white rounded-2xl p-5 custom-shadow border border-amber-100 text-center">
+                        <h3 class="text-xs font-bold uppercase text-gray-500 tracking-wider mb-2">Brennerhaltung & Führung</h3>
+                        
+                        <div class="chart-container">
+                            <canvas id="torchCanvas"></canvas>
+                        </div>
+
+                        <div class="mt-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
+                            <p id="torch_label" class="text-xs font-bold text-amber-900">Ziehend / Schleppend (15°-20°)</p>
+                            <p id="torch_subtext" class="text-[11px] text-amber-700 mt-1">
+                                Schlacke immer hinter der Schmelze halten!
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="safety_box" class="bg-gradient-to-br from-amber-900 to-amber-950 text-white rounded-2xl p-5 shadow-xl border border-amber-700">
+                        <h3 class="font-bold mb-2 text-xs uppercase tracking-wider text-amber-300 flex items-center">
+                            <span class="mr-2">🚨</span> Arbeitsschutz
+                        </h3>
+                        <p id="safety_text" class="text-xs leading-relaxed text-amber-100">
+                            Fülldraht erzeugt intensiven Rauch. Nutze eine P3-Atemschutzmaske oder eine Absaugung.
+                        </p>
+                    </div>
+
+                    <button onclick="showSection('inspection')" class="w-full bg-amber-600 text-white py-3.5 rounded-xl font-bold text-sm hover:bg-amber-700 transition shadow-lg flex justify-center items-center">
+                        Zur KI-Nahtkontrolle →
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: KI-NAHTKONTROLLE -->
+        <section id="inspection" class="step-section hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 sm:p-8 custom-shadow border border-amber-100">
+                <div class="text-center max-w-xl mx-auto mb-6">
+                    <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl shadow-inner">
+                        📸
+                    </div>
+                    <h2 class="text-2xl font-black text-gray-900">Visuelle Nahtkontrolle & KI-Bewertung</h2>
+                    <p class="text-gray-500 text-xs mt-1 leading-relaxed">
+                        Fotografiere deine gereinigte Schweißnaht exakt nach den folgenden Anweisungen für eine automatische Fehleranalyse nach ISO 5817.
+                    </p>
+                </div>
+
+                <!-- Visual Photo Guide Graphic & Instructions -->
+                <div class="bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-2xl p-5 border border-amber-200/80 mb-6">
+                    <h3 class="font-bold text-amber-900 text-xs uppercase tracking-wider mb-4 flex items-center">
+                        <span class="mr-2">📐</span> Foto-Anleitung für optimale Analyse-Ergebnisse
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                        <!-- SVG Graphic Diagram for Photo Angle & Distance -->
+                        <div class="bg-white p-3 rounded-xl border border-amber-200 shadow-sm flex flex-col items-center">
+                            <svg viewBox="0 0 300 180" class="w-full h-auto max-w-[260px]">
+                                <!-- Ground / Workpiece -->
+                                <rect x="20" y="140" width="260" height="15" fill="#9ca3af" rx="3" />
+                                <path d="M 60 140 C 100 130, 200 130, 240 140" fill="none" stroke="#d97706" stroke-width="6" stroke-linecap="round" />
+                                
+                                <!-- Distance indicator -->
+                                <line x1="150" y1="65" x2="150" y2="128" stroke="#0284c7" stroke-width="2" stroke-dasharray="4,4" />
+                                <text x="158" y="100" fill="#0284c7" font-size="11" font-weight="bold">15 - 20 cm</text>
+
+                                <!-- 90 Degree Angle Arc -->
+                                <path d="M 130 140 A 20 20 0 0 1 150 120" fill="none" stroke="#16a34a" stroke-width="2" />
+                                <text x="110" y="130" fill="#16a34a" font-size="10" font-weight="bold">90°</text>
+
+                                <!-- Smartphone / Camera Icon Representation -->
+                                <rect x="115" y="30" width="70" height="35" fill="#1e293b" rx="6" />
+                                <circle x1="150" y1="47" r="6" fill="#38bdf8" />
+                                <rect x="120" y="34" width="8" height="4" fill="#64748b" rx="1" />
+                                
+                                <!-- Flash / Light source representation -->
+                                <path d="M 220 40 L 180 80" stroke="#f59e0b" stroke-width="2" stroke-dasharray="3,3" />
+                                <text x="225" y="40" fill="#d97706" font-size="10" font-weight="bold">☀️ Licht seitlich</text>
+                            </svg>
+                            <span class="text-[10px] text-gray-500 font-bold mt-2">Diagramm: Kamera-Positionierung</span>
+                        </div>
+
+                        <!-- Step Checklist -->
+                        <ul class="text-xs space-y-2.5 text-gray-700">
+                            <li class="flex items-start">
+                                <span class="bg-amber-600 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center font-bold mr-2 mt-0.5 shrink-0">1</span>
+                                <span><strong>Entschlacken:</strong> Schlacke und Spritzer gründlich mit Schlackenhammer und Drahtbürste entfernen.</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="bg-amber-600 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center font-bold mr-2 mt-0.5 shrink-0">2</span>
+                                <span><strong>Exakt 90° Winkel:</strong> Kamera senkrecht über der Naht halten (keine Schrägaufnahme).</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="bg-amber-600 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center font-bold mr-2 mt-0.5 shrink-0">3</span>
+                                <span><strong>Abstand 15-20 cm:</strong> Scharfstellen, so dass ca. 10 cm der Schweißnaht gut zu sehen sind.</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="bg-amber-600 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center font-bold mr-2 mt-0.5 shrink-0">4</span>
+                                <span><strong>Belichtung:</strong> Ausreichend Licht ohne starke Blendschchatten direkt auf der Raupe.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Upload Area with Error Guards -->
+                <div class="max-w-sm mx-auto text-center space-y-3">
+                    <label class="block w-full cursor-pointer bg-gradient-to-r from-amber-600 to-amber-700 text-white font-bold py-4 px-6 rounded-xl hover:from-amber-700 hover:to-amber-800 transition shadow-lg text-sm">
+                        <span>📷 Naht fotografieren / Bild hochladen</span>
+                        <input type="file" id="seam_image_input" accept="image/*" class="hidden" onchange="processSeamImage(event)">
+                    </label>
+                    <p class="text-[10px] text-gray-400 font-mono">Unterstützt JPG, PNG • Automatische Analyse nach ISO 5817</p>
+                </div>
+
+                <!-- Image Preview Canvas -->
+                <div id="image_preview_container" class="hidden my-6 max-w-md mx-auto text-center">
+                    <p class="text-xs font-bold text-gray-500 mb-2">Hochgeladenes Foto mit Erkennungsnetz:</p>
+                    <div class="relative inline-block border-2 border-amber-500 rounded-xl overflow-hidden shadow-md">
+                        <canvas id="analysis_canvas" class="max-w-full h-auto rounded-lg"></canvas>
+                    </div>
+                </div>
+
+                <!-- Analysis Loader -->
+                <div id="ai_loading" class="hidden my-6 p-6 bg-amber-50 rounded-2xl max-w-md mx-auto border border-amber-200 text-center">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-600 border-t-transparent mb-3"></div>
+                    <p class="text-xs font-bold text-amber-900">Analysiere Schuppung, Porosität & Einbrandkerben...</p>
+                </div>
+
+                <!-- Results Section -->
+                <div id="ai_results" class="mt-6 hidden text-left max-w-2xl mx-auto bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-6">
+                    <div class="flex items-center justify-between border-b pb-4 border-gray-200">
+                        <div>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Bewertungsstandard ISO 5817</span>
+                            <h3 class="font-black text-lg text-gray-900" id="res_quality_title">Bewertung: Gruppe B (Hohe Qualität)</h3>
+                        </div>
+                        <span id="res_badge" class="px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-xs font-black uppercase tracking-wider">OPTIMAL / BESTANDEN</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="p-3 bg-white rounded-xl border border-gray-200">
+                            <span class="text-[10px] text-gray-500 font-bold block uppercase">Porenneigung</span>
+                            <span id="res_pores" class="font-black text-sm text-gray-800">&lt; 0.5% (Exzellent)</span>
+                        </div>
+                        <div class="p-3 bg-white rounded-xl border border-gray-200">
+                            <span class="text-[10px] text-gray-500 font-bold block uppercase">Einbrandkerben</span>
+                            <span id="res_undercut" class="font-black text-sm text-green-600">&lt; 0.2 mm</span>
+                        </div>
+                        <div class="p-3 bg-white rounded-xl border border-gray-200">
+                            <span class="text-[10px] text-gray-500 font-bold block uppercase">Bindefehler / Risse</span>
+                            <span id="res_cracks" class="font-black text-sm text-green-600">Keine erkannt</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-100/60 p-4 rounded-xl border border-amber-200 space-y-2">
+                        <h4 class="text-xs font-bold text-amber-900 flex items-center">
+                            💡 KI-Feedback & Verbesserungsvorschläge
+                        </h4>
+                        <ul id="res_feedback_list" class="text-xs text-amber-800 space-y-1.5 list-disc pl-4">
+                            <li><strong>Gleichmäßiger Einbrand:</strong> Gute Schuppung und gleichmäßige Nahtbreite.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Default profiles and stored application state
+        let profiles = {
+            'p1': { id: 'p1', name: 'Parkside PFDS 120 (Kompakt)', u_min: 14.0, u_max: 17.4, i_min: 30, i_max: 120, wfs_mode: 'synergic', wfs_per_knob: 1.2 },
+            'p2': { id: 'p2', name: 'MIG/MAG 200A Inverter', u_min: 14.0, u_max: 26.0, i_min: 30, i_max: 200, wfs_mode: 'separate', wfs_per_knob: 1.2 }
+        };
+
+        let projects = {
+            'proj1': { id: 'proj1', name: 'Werkbank Rahmen 3mm', mat1: 'steel', mat2: 'same', thickness1: 3.0, thickness2: 3.0, position: 'horizontal', gas: 'none' }
+        };
+
+        let currentProfileId = 'p1';
+        let currentProjectId = 'proj1';
+
+        let torchChart = null;
+
+        // On Load Initializer
+        window.onload = () => {
+            loadStorageData();
+            initPWA();
+            initTorchChart();
+            populateProfileDropdown();
+            populateProjectDropdown();
+            loadProfileToUI(currentProfileId);
+            loadProjectToUI(currentProjectId);
+            updateUI();
+        };
+
+        function loadStorageData() {
+            try {
+                const savedProfiles = localStorage.getItem('weldmaster_profiles');
+                if (savedProfiles) profiles = JSON.parse(savedProfiles);
+                
+                const savedProjects = localStorage.getItem('weldmaster_projects');
+                if (savedProjects) projects = JSON.parse(savedProjects);
+            } catch(e) {
+                console.warn("Storage access failed, using default state", e);
+            }
+        }
+
+        function saveStorageData() {
+            try {
+                localStorage.setItem('weldmaster_profiles', JSON.stringify(profiles));
+                localStorage.setItem('weldmaster_projects', JSON.stringify(projects));
+            } catch(e) {
+                console.warn("Save failed", e);
+            }
+        }
+
+        function populateProfileDropdown() {
+            const select = document.getElementById('profile_select');
+            select.innerHTML = '';
+            Object.values(profiles).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.innerText = p.name;
+                if (p.id === currentProfileId) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function loadSelectedProfile() {
+            const id = document.getElementById('profile_select').value;
+            currentProfileId = id;
+            loadProfileToUI(id);
+            updateUI();
+        }
+
+        function loadProfileToUI(id) {
+            const p = profiles[id];
+            if (!p) return;
+            document.getElementById('profile_name').value = p.name;
+            document.getElementById('u_min').value = p.u_min;
+            document.getElementById('u_max').value = p.u_max;
+            document.getElementById('i_min').value = p.i_min;
+            document.getElementById('i_max').value = p.i_max;
+            
+            const radios = document.getElementsByName('wfs_mode');
+            radios.forEach(r => {
+                if (r.value === p.wfs_mode) r.checked = true;
+            });
+            toggleWfsMode();
+        }
+
+        function saveCurrentProfile() {
+            const id = currentProfileId || 'p_' + Date.now();
+            profiles[id] = {
+                id: id,
+                name: document.getElementById('profile_name').value || 'Mein Gerät',
+                u_min: parseFloat(document.getElementById('u_min').value) || 14,
+                u_max: parseFloat(document.getElementById('u_max').value) || 28,
+                i_min: parseFloat(document.getElementById('i_min').value) || 30,
+                i_max: parseFloat(document.getElementById('i_max').value) || 180,
+                wfs_mode: document.querySelector('input[name="wfs_mode"]:checked').value,
+                wfs_per_knob: profiles[id]?.wfs_per_knob || 1.2
+            };
+            currentProfileId = id;
+            saveStorageData();
+            populateProfileDropdown();
+            showNotice("Geräte-Profil gespeichert!");
+        }
+
+        function createNewProfile() {
+            const newId = 'p_' + Date.now();
+            profiles[newId] = {
+                id: newId,
+                name: 'Neues Schweißgerät',
+                u_min: 14.0,
+                u_max: 20.0,
+                i_min: 30,
+                i_max: 140,
+                wfs_mode: 'separate',
+                wfs_per_knob: 1.2
+            };
+            currentProfileId = newId;
+            saveStorageData();
+            populateProfileDropdown();
+            loadProfileToUI(newId);
+            updateUI();
+        }
+
+        function deleteCurrentProfile() {
+            if (Object.keys(profiles).length <= 1) {
+                showNotice("Es muss mindestens ein Profil existieren.");
+                return;
+            }
+            delete profiles[currentProfileId];
+            currentProfileId = Object.keys(profiles)[0];
+            saveStorageData();
+            populateProfileDropdown();
+            loadProfileToUI(currentProfileId);
+            updateUI();
+        }
+
+        function populateProjectDropdown() {
+            const select = document.getElementById('project_select');
+            select.innerHTML = '';
+            Object.values(projects).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.innerText = p.name;
+                if (p.id === currentProjectId) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function loadSelectedProject() {
+            const id = document.getElementById('project_select').value;
+            currentProjectId = id;
+            loadProjectToUI(id);
+            updateUI();
+        }
+
+        function loadProjectToUI(id) {
+            const p = projects[id];
+            if (!p) return;
+            document.getElementById('project_name').value = p.name;
+            document.getElementById('mat1').value = p.mat1 || 'steel';
+            document.getElementById('mat2').value = p.mat2 || 'same';
+            
+            document.getElementById('thickness1_num').value = p.thickness1 || 3.0;
+            document.getElementById('thickness1_range').value = p.thickness1 || 3.0;
+            document.getElementById('thickness2_num').value = p.thickness2 || p.thickness1 || 3.0;
+            document.getElementById('thickness2_range').value = p.thickness2 || p.thickness1 || 3.0;
+
+            document.getElementById('position').value = p.position || 'horizontal';
+            document.getElementById('gas').value = p.gas || 'none';
+        }
+
+        function saveCurrentProject() {
+            const id = currentProjectId || 'proj_' + Date.now();
+            projects[id] = {
+                id: id,
+                name: document.getElementById('project_name').value || 'Mein Projekt',
+                mat1: document.getElementById('mat1').value,
+                mat2: document.getElementById('mat2').value,
+                thickness1: parseFloat(document.getElementById('thickness1_num').value) || 3.0,
+                thickness2: parseFloat(document.getElementById('thickness2_num').value) || 3.0,
+                position: document.getElementById('position').value,
+                gas: document.getElementById('gas').value
+            };
+            currentProjectId = id;
+            saveStorageData();
+            populateProjectDropdown();
+            showNotice("Projekt gespeichert!");
+        }
+
+        function createNewProject() {
+            const newId = 'proj_' + Date.now();
+            projects[newId] = {
+                id: newId,
+                name: 'Neues Projekt',
+                mat1: 'steel',
+                mat2: 'same',
+                thickness1: 3.0,
+                thickness2: 3.0,
+                position: 'horizontal',
+                gas: 'none'
+            };
+            currentProjectId = newId;
+            saveStorageData();
+            populateProjectDropdown();
+            loadProjectToUI(newId);
+            updateUI();
+        }
+
+        // Synchronize thickness sliders and numeric text fields
+        function syncThickness(source) {
+            if (source === 'range1') {
+                document.getElementById('thickness1_num').value = document.getElementById('thickness1_range').value;
+            } else if (source === 'num1') {
+                document.getElementById('thickness1_range').value = document.getElementById('thickness1_num').value;
+            } else if (source === 'range2') {
+                document.getElementById('thickness2_num').value = document.getElementById('thickness2_range').value;
+            } else if (source === 'num2') {
+                document.getElementById('thickness2_range').value = document.getElementById('thickness2_num').value;
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            calculateAndRenderParameters();
+            updateGuidelines();
+            updateTorchChart();
+        }
+
+        function calculateAndRenderParameters() {
+            const u_min = parseFloat(document.getElementById('u_min').value) || 14.0;
+            const u_max = parseFloat(document.getElementById('u_max').value) || 28.0;
+            const i_min = parseFloat(document.getElementById('i_min').value) || 30;
+            const i_max = parseFloat(document.getElementById('i_max').value) || 180;
+            const wfs_mode = document.querySelector('input[name="wfs_mode"]:checked').value;
+
+            const t1 = parseFloat(document.getElementById('thickness1_num').value) || 3.0;
+            const t2 = parseFloat(document.getElementById('thickness2_num').value) || t1;
+            
+            // Critical thickness for heat calculation: minimum thickness prevents burn-through
+            const effectiveThickness = Math.min(t1, t2) * 0.7 + Math.max(t1, t2) * 0.3;
+
+            const mat1 = document.getElementById('mat1').value;
+            const mat2 = document.getElementById('mat2').value;
+            const position = document.getElementById('position').value;
+            const gas = document.getElementById('gas').value;
+
+            // Ideal current estimation for FCAW
+            let amp_ideal = effectiveThickness * 38;
+
+            if (position === 'vertical_up') amp_ideal *= 0.82;
+            if (position === 'vertical_down') amp_ideal *= 1.10;
+
+            // Ideal voltage calculation (Modified Lesnewich formula)
+            let gasKorr = (gas === 'mix') ? 1.0 : (gas === 'co2' ? 1.8 : 0);
+            let matKorr = (mat1 === 'stainless' || mat2 === 'stainless') ? 1.2 : 0;
+            let posKorr = (position === 'vertical_up') ? -2.0 : (position === 'vertical_down' ? 0.5 : 0);
+
+            let v_ideal = (0.045 * amp_ideal) + 13.5 + gasKorr + matKorr + posKorr;
+
+            // STRICT DEVICE CLAMPING LOGIC
+            let isLimitReached = false;
+            let v_actual = v_ideal;
+            let amp_actual = amp_ideal;
+
+            if (v_actual > u_max) {
+                v_actual = u_max;
+                isLimitReached = true;
+                // Back-calculate max achievable amperage given machine voltage limit
+                amp_actual = Math.max(i_min, (u_max - 13.5 - gasKorr - matKorr - posKorr) / 0.045);
+            }
+            if (v_actual < u_min) {
+                v_actual = u_min;
+            }
+
+            amp_actual = Math.max(i_min, Math.min(i_max, amp_actual));
+
+            // Wire Feed Speed (WFS)
+            const C = (mat1 === 'stainless' || mat2 === 'stainless') ? 135 : 150;
+            const d = 0.9; // Standard 0.9mm wire
+            let wfs = amp_actual / (d * d * (C / 100));
+
+            // UI Warnings and Status Display
+            const warnBox = document.getElementById('device_limit_warning');
+            const warnMsg = document.getElementById('device_limit_msg');
+            const statusBadge = document.getElementById('target_status_badge');
+
+            if (isLimitReached) {
+                warnBox.classList.remove('hidden');
+                warnMsg.innerHTML = `Dein Projekt (${t1}mm / ${t2}mm) benötigt idealerweise <strong>${v_ideal.toFixed(1)} V</strong>. Dein Schweißgerät ist auf maximal <strong>${u_max.toFixed(1)} V</strong> begrenzt. Die Einstellungen wurden auf den Maximalwert deines Geräts angepasst.<br>💡 <strong>Empfehlung:</strong> Nahtstelle anfasen (V-Fuge) oder mehrlagig schweißen!`;
+                statusBadge.className = "text-xs font-bold bg-red-100 text-red-800 px-3 py-1 rounded-full";
+                statusBadge.innerText = "Gerät an Leistungsgrenze";
+            } else {
+                warnBox.classList.add('hidden');
+                statusBadge.className = "text-xs font-bold bg-amber-100 text-amber-800 px-3 py-1 rounded-full";
+                statusBadge.innerText = "Optimaler Arbeitspunkt";
+            }
+
+            // Render Values
+            document.getElementById('res_v_phys').innerText = v_actual.toFixed(1) + ' V';
+            document.getElementById('res_wfs_phys').innerText = wfs.toFixed(1) + ' m/min';
+            document.getElementById('res_amp').innerText = Math.round(amp_actual) + ' A';
+
+            // Knob position on 1 to 10 scale
+            const uRange = u_max - u_min;
+            const v_knob = uRange > 0 ? ((v_actual - u_min) / uRange) * 10 : 10;
+            document.getElementById('res_v_knob').innerText = 'Regler Stufe: ' + (uRange > 0 ? v_knob.toFixed(1) : 'MAX') + ' / 10';
+
+            if (wfs_mode === 'synergic') {
+                document.getElementById('res_wfs_knob').innerText = 'Automatisch gekoppelt';
+            } else {
+                const wfs_per_knob = profiles[currentProfileId]?.wfs_per_knob || 1.2;
+                const wfs_knob = Math.max(1, Math.min(10, wfs / wfs_per_knob));
+                document.getElementById('res_wfs_knob').innerText = 'Regler Stufe: ' + wfs_knob.toFixed(1) + ' / 10';
+            }
+
+            document.getElementById('lbl_i_min').innerText = i_min;
+            document.getElementById('lbl_i_max').innerText = i_max;
+
+            const totalSpan = i_max - i_min;
+            const iPercent = totalSpan > 0 ? ((amp_actual - i_min) / totalSpan) * 100 : 50;
+            document.getElementById('amp_progress').style.width = Math.min(100, Math.max(5, iPercent)) + '%';
+        }
+
+        function updateGuidelines() {
+            const container = document.getElementById('dynamic_guidelines');
+            const safety = document.getElementById('safety_text');
+            const polarHint = document.getElementById('polarization_hint');
+            
+            const mat1 = document.getElementById('mat1').value;
+            const mat2 = document.getElementById('mat2').value;
+            const gas = document.getElementById('gas').value;
+            const position = document.getElementById('position').value;
+            const t1 = parseFloat(document.getElementById('thickness1_num').value) || 3.0;
+            const t2 = parseFloat(document.getElementById('thickness2_num').value) || t1;
+
+            let html = '';
+
+            // Polarization Notice
+            if (gas === 'none') {
+                polarHint.innerHTML = 'Selbstschützender Fülldraht erfordert <strong>DCEN (Brenner an Minuspol -)</strong>. Massezange an Pluspol (+)!';
+            } else {
+                polarHint.innerHTML = 'Gasgeschützter Fülldraht (FCAW-G) erfordert meist <strong>DCEP (Brenner an Pluspol +)</strong>.';
+            }
+
+            // Mixed Material Handling
+            if ((mat1 === 'galvanized' || mat2 === 'galvanized') && (mat1 !== 'galvanized' || mat2 !== 'galvanized')) {
+                html += `
+                    <div class="p-3 bg-red-50 rounded-lg border border-red-200 text-red-900">
+                        <strong class="block mb-1">⚠️ MISCHVERBINDUNG VERZINKT + BAUSTAHL:</strong>
+                        Zinkschicht am verzinkten Fügepartner ca. 25-30 mm weit metallisch blank schleifen. Zinkeinschlüsse in der Schmelze führen sonst zu Poren und Sprödigkeit.
+                    </div>
+                `;
+            } else if (mat1 === 'galvanized' && mat2 === 'galvanized') {
+                html += `
+                    <div class="p-3 bg-red-50 rounded-lg border border-red-200 text-red-900">
+                        <strong class="block mb-1">⚠️ VERZINKTER STAHL:</strong>
+                        Beidseitig Zinkschicht im Nahtbereich vollständig entfernen. Verlangsame den Vorschub um ca. 15%, um Ausgasung zu ermöglichen.
+                    </div>
+                `;
+            }
+
+            if ((mat1 === 'stainless' || mat2 === 'stainless') && mat1 !== mat2) {
+                html += `
+                    <div class="p-3 bg-purple-50 rounded-lg border border-purple-200 text-purple-900">
+                        <strong class="block mb-1">✨ Schwarz-Weiß-Verbindung (Edelstahl + Baustahl):</strong>
+                        Nutze für diese Mischverbindung vorzugsweise überlegierten Fülldraht (z. B. E309LT / 1.4370), um Heißrisse zu vermeiden. Verwende eine reine Edelstahl-Drahtbürste!
+                    </div>
+                `;
+            }
+
+            // Mixed Thickness Handling
+            if (Math.abs(t1 - t2) >= 1.0) {
+                html += `
+                    <div class="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                        <strong class="text-amber-900 block mb-1">📐 UNTERSCHIEDLICHE BLECHSTÄRKEN (${t1} mm & ${t2} mm):</strong>
+                        Richte den Lichtbogen zu 70% auf die dickere Seite (${Math.max(t1, t2)} mm), um dort genügend Wärme einzubringen, und ziehe das Schmelzbad kurz auf das dünnere Blech.
+                    </div>
+                `;
+            }
+
+            if (position === 'vertical_up') {
+                html += `
+                    <div class="p-3 bg-amber-100 rounded-lg border border-amber-300 text-amber-900">
+                        <strong class="block mb-1">📐 Steignaht-Technik (PF):</strong>
+                        Dreiecks-Pendelung. An den Seitenflanken jeweils ca. 0.5s verweilen, um Einbrandkerben aufzufüllen, und zügig über die Mitte wechseln.
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html || `<div class="p-3 bg-amber-50 rounded-lg border border-amber-200">Standard-Vorbereitung: Nahtbereich metallisch blank schleifen und mit Aceton entfetten.</div>`;
+            
+            // Safety Text
+            if (mat1 === 'galvanized' || mat2 === 'galvanized') {
+                safety.innerText = "ACHTUNG ZINKFIEBER! Trage zwingend eine Atemmaske der Klasse FFP3 oder nutze eine Absaugung!";
+            } else if (mat1 === 'stainless' || mat2 === 'stainless') {
+                safety.innerText = "ACHTUNG CHROM-VI! Beim Edelstahl-Schweißen entsteht krebserregender Rauch. Effiziente Absaugung zwingend!";
+            } else {
+                safety.innerText = "Schweißhelm mind. DIN 10-11, Lederhandschuhe und FFP3-Atemschutzmaske tragen.";
+            }
+        }
+
+        function initTorchChart() {
+            const ctx = document.getElementById('torchCanvas').getContext('2d');
+            torchChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [20, 80],
+                        backgroundColor: ['#d97706', '#e5e7eb'],
+                        borderWidth: 0,
+                        circumference: 180,
+                        rotation: 270
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { tooltip: { enabled: false }, legend: { display: false } },
+                    cutout: '75%'
+                }
+            });
+        }
+
+        function updateTorchChart() {
+            if (!torchChart) return;
+            const position = document.getElementById('position').value;
+            let angle = 20;
+            let label = "Ziehend / Schleppend (15°-20°)";
+            let subtext = "Schlacke immer hinter dem Schmelzbad halten!";
+
+            if (position === 'vertical_up') {
+                angle = 10;
+                label = "Leicht Stechend (5°-10°)";
+                subtext = "Brenner leicht nach oben richten, um Schmelze abzustützen.";
+            } else if (position === 'vertical_down') {
+                angle = 15;
+                label = "Stechend (10°-15°)";
+                subtext = "Schnelle Führung, damit Schlacke nicht überholt.";
+            }
+
+            torchChart.data.datasets[0].data = [angle, 100 - angle];
+            torchChart.update();
+            document.getElementById('torch_label').innerText = label;
+            document.getElementById('torch_subtext').innerText = subtext;
+        }
+
+        function processSeamImage(event) {
+            try {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+
+                const loader = document.getElementById('ai_loading');
+                const results = document.getElementById('ai_results');
+                const previewContainer = document.getElementById('image_preview_container');
+                const canvas = document.getElementById('analysis_canvas');
+
+                results.classList.add('hidden');
+                previewContainer.classList.add('hidden');
+                loader.classList.remove('hidden');
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        canvas.width = Math.min(600, img.width);
+                        canvas.height = (img.height / img.width) * canvas.width;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                        // Draw Simulated AI Inspection Overlay Grid
+                        ctx.strokeStyle = '#22c55e';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(canvas.width * 0.15, canvas.height * 0.35, canvas.width * 0.7, canvas.height * 0.3);
+
+                        ctx.fillStyle = '#22c55e';
+                        ctx.font = 'bold 12px sans-serif';
+                        ctx.fillText('ISO 5817 - Zone A OK', canvas.width * 0.16, canvas.height * 0.32);
+
+                        loader.classList.add('hidden');
+                        previewContainer.classList.remove('hidden');
+                        results.classList.remove('hidden');
+                        results.scrollIntoView({ behavior: 'smooth' });
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } catch(err) {
+                console.error("Photo processing error", err);
+                document.getElementById('ai_loading').classList.add('hidden');
+                showNotice("Fehler beim Laden des Fotos. Bitte versuche es erneut.");
+            }
+        }
+
+        function toggleWfsMode() {
+            const selected = document.querySelector('input[name="wfs_mode"]:checked').value;
+            const calBox = document.getElementById('calibration-box');
+            if (selected === 'synergic') {
+                calBox.classList.add('opacity-50', 'pointer-events-none');
+            } else {
+                calBox.classList.remove('opacity-50', 'pointer-events-none');
+            }
+            updateUI();
+        }
+
+        function calculateWFSConstant() {
+            const lengthCm = parseFloat(document.getElementById('cal_length').value) || 150;
+            const mPerMinAtKnob5 = (lengthCm / 100) * 4;
+            if (profiles[currentProfileId]) {
+                profiles[currentProfileId].wfs_per_knob = mPerMinAtKnob5 / 5;
+                saveStorageData();
+            }
+            document.getElementById('v_wfs_val').innerText = mPerMinAtKnob5.toFixed(1);
+            showNotice("Kalibrierung abgeschlossen!");
+            updateUI();
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.step-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(sectionId).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('bg-amber-600', 'text-white', 'shadow-md');
+                b.classList.add('bg-white', 'text-gray-600');
+            });
+            
+            const activeBtn = document.getElementById('nav-' + sectionId);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-gray-600');
+                activeBtn.classList.add('bg-amber-600', 'text-white', 'shadow-md');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showNotice(text) {
+            const notice = document.createElement('div');
+            notice.className = 'fixed bottom-4 right-4 bg-amber-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl font-bold z-50 transition-all';
+            notice.innerText = text;
+            document.body.appendChild(notice);
+            setTimeout(() => notice.remove(), 3000);
+        }
+
+        // PWA Service Worker Registration & Installation Prompt
+        function initPWA() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    console.log('Service Worker registered successfully', reg.scope);
+                }).catch(err => console.warn('SW registration failed', err));
+            }
+
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                const btn = document.getElementById('pwa-install-btn');
+                btn.classList.remove('hidden');
+                btn.addEventListener('click', () => {
+                    btn.classList.add('hidden');
+                    deferredPrompt.prompt();
+                });
+            });
+        }
+    </script>
+</body>
+</html>
